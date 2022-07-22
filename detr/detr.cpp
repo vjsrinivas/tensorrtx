@@ -171,7 +171,10 @@ int num_heads = 8
     v_shuffle->setReshapeDimensions(Dims3{ -1, num_heads, head_dim });
     v_shuffle->setSecondTranspose(Permutation{ 1, 0, 2 });
 
-    auto q_product_k = network->addMatrixMultiply(*q_shuffle->getOutput(0), false, *k_shuffle->getOutput(0), true);
+    // OLD parameter: input0, doTransposeOnInput0, input1, doTransposeOnInput1
+    //auto q_product_k = network->addMatrixMultiply(*q_shuffle->getOutput(0), false, *k_shuffle->getOutput(0), true);
+    //std::cout << "q vector dimension: " << *q_shuffle->getOutput(0).getDimensions() << std::endl;
+    auto q_product_k = network->addMatrixMultiply(*q_shuffle->getOutput(0), MatrixOperation::kNONE, *k_shuffle->getOutput(0), MatrixOperation::kTRANSPOSE);
     assert(q_product_k);
 
     // src_key_padding_mask are all false, so do nothing here
@@ -181,7 +184,8 @@ int num_heads = 8
     assert(softmax);
     softmax->setAxes(4);
 
-    auto attn_product_v = network->addMatrixMultiply(*softmax->getOutput(0), false, *v_shuffle->getOutput(0), false);
+    //auto attn_product_v = network->addMatrixMultiply(*softmax->getOutput(0), false, *v_shuffle->getOutput(0), false);
+    auto attn_product_v = network->addMatrixMultiply(*softmax->getOutput(0), MatrixOperation::kNONE, *v_shuffle->getOutput(0), MatrixOperation::kNONE);
     assert(attn_product_v);
 
     auto attn_shuffle = network->addShuffle(*attn_product_v->getOutput(0));
